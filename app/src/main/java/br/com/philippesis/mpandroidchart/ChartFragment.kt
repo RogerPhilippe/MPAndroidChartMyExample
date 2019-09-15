@@ -8,10 +8,13 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.PieChart
+import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.data.*
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.utils.ColorTemplate
 import com.google.gson.Gson
+import java.text.DecimalFormat
 
 /**
  * A simple [Fragment] subclass.
@@ -39,7 +42,9 @@ class ChartFragment : Fragment() {
 
     private fun getGrowthChart(method: String) {
 
-        val json = "[{\"id\":\"1\", \"year\":\"2010\", \"growth_rate\":\"13.2\"},{\"id\":\"2\", \"year\":\"2011\", \"growth_rate\":\"15.7\"},{\"id\":\"3\", \"year\":\"2012\", \"growth_rate\":\"19.8\"},{\"id\":\"4\", \"year\":\"2013\", \"growth_rate\":\"25.7\"},{\"id\":\"5\", \"year\":\"2014\", \"growth_rate\":\"31.9\"},{\"id\":\"6\", \"year\":\"2015\", \"growth_rate\":\"35.7\"},{\"id\":\"7\", \"year\":\"2016\", \"growth_rate\":\"41.2\"},{\"id\":\"8\", \"year\":\"2017\", \"growth_rate\":\"55.7\"}]"
+        val days = arrayOf("JAN", "FEV", "MAR", "ABR", "MAI", "JUN")
+
+        val json = "[{\"id\":\"1\", \"year\":\"0\", \"growth_rate\":\"1320.20\"},{\"id\":\"2\", \"year\":\"1\", \"growth_rate\":\"1502.7\"},{\"id\":\"3\", \"year\":\"2\", \"growth_rate\":\"1109.8\"},{\"id\":\"4\", \"year\":\"3\", \"growth_rate\":\"2005.77\"},{\"id\":\"5\", \"year\":\"4\", \"growth_rate\":\"1221.99\"},{\"id\":\"6\", \"year\":\"5\", \"growth_rate\":\"1500.7\"}]"
 
 
         val list = Gson().fromJson(json, Array<Growth>::class.java).asList()
@@ -50,28 +55,35 @@ class ChartFragment : Fragment() {
 
             list.forEach { item -> mutableList.add(BarEntry(item.year, item.growth_rate)) }
 
-            val barDataSet = BarDataSet(mutableList, "Growth")
+            val barDataSet = BarDataSet(mutableList, "Meses")
             barDataSet.colors = ColorTemplate.COLORFUL_COLORS.asList()
 
             val barData = BarData(barDataSet)
             barData.barWidth = 0.9f
 
             mBarChart?.visibility = View.VISIBLE
-            mBarChart?.animateY(5000)
+            mBarChart?.animateY(2000)
             mBarChart?.data = barData
             mBarChart?.setFitBars(true)
+            mBarChart?.setPinchZoom(false)
+            mBarChart?.setDrawValueAboveBar(true)
+            mBarChart?.setScaleEnabled(false)
+            mBarChart?.setTouchEnabled(false)
 
             val description = Description()
-            description.text = "Descrição do Gráfico"
+            description.text = "Saídas 1º Semestre"
             mBarChart?.description = description
             mBarChart?.invalidate()
+            mBarChart?.xAxis?.valueFormatter = MyXAxisFormatter(days)
+            mBarChart?.axisLeft?.valueFormatter = MyYAxisFormatter()
+            mBarChart?.axisRight?.isEnabled = false
 
         }
         else if (method == "pie") {
 
             val mutableList = mutableListOf<PieEntry>()
 
-            list.forEach { item -> mutableList.add(PieEntry(item.growth_rate, item.year.toString())) }
+            list.forEach { item -> mutableList.add(PieEntry(item.growth_rate, days[item.year.toInt()])) }
 
             val pieDataSet = PieDataSet(mutableList, "Growth")
             pieDataSet.colors = ColorTemplate.COLORFUL_COLORS.asList()
@@ -89,6 +101,25 @@ class ChartFragment : Fragment() {
         }
 
     }
+
+    class MyXAxisFormatter(private val days: Array<String>) : ValueFormatter() {
+
+        override fun getAxisLabel(value: Float, axis: AxisBase?): String {
+            return days[value.toInt()]
+        }
+
+
+    }
+
+    class MyYAxisFormatter: ValueFormatter() {
+
+        private val format = DecimalFormat("###,##0.00")
+
+        override fun getAxisLabel(value: Float, axis: AxisBase?): String {
+            return "R$${format.format(value)}"
+        }
+    }
+
 
 
 }
